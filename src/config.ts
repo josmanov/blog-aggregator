@@ -9,26 +9,29 @@ export type Config = {
 
 const getConfigFilePath = (): string => {
     
-    try {
-        const homePath = homedir();
-        return (homePath + "/.gatorconfig.json");
-    } catch(error) {
-        throw new Error("Error: Failed getting home directory path");
-    }
+    const homePath = homedir();
+    return (homePath + "/.gatorconfig.json");
 }
 
-const validateConfig = (rawConfig: any): Config => {
+const validateConfig = (rawConfig: unknown): Config => {
 
-    if (!rawConfig.db_url || typeof rawConfig.db_url !== "string") {
+    if (typeof rawConfig !== "object" || rawConfig === null) {
+    throw new Error("Invalid config");
+    }
+    const obj = rawConfig as {
+        db_url: unknown;
+        current_user_name: unknown;
+    }
+    if (typeof obj.db_url !== "string") {
         throw new Error("Missing db_url");
     }
-    if (!rawConfig.current_user_name || typeof rawConfig.current_user_name !== "string") {
+    if (typeof obj.current_user_name !== "string") {
         throw new Error("Missing current_user_name");
     }
 
     return {
-        dbUrl: rawConfig.db_url,
-        currentUserName: rawConfig.current_user_name
+        dbUrl: obj.db_url,
+        currentUserName: obj.current_user_name
     }
 }
 
@@ -38,23 +41,26 @@ export const readConfig = (): Config => {
     const configData = fs.readFileSync(configPath, "utf-8");
     const configObj = JSON.parse(configData);
     const validatedConfig = validateConfig(configObj);
-
     return (validatedConfig);
 }
 
 export const setUser = (name: string) => {
 
     const configObj = readConfig();
-    
     const configModified: Config = {
         "dbUrl": configObj.dbUrl,
         "currentUserName": name
     }
-
     writeConfig(configModified)
 }
 
 const writeConfig = (config: Config): void => {
 
-    const result = validateConfig(config)
+    const path = getConfigFilePath();
+    const fileConfig = {
+        db_url: config.dbUrl,
+        current_user_name: config.currentUserName
+    }
+    const data = JSON.stringify(fileConfig, null, 2);
+    fs.writeFileSync(path, data, "utf-8")
 }

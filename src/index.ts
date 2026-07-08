@@ -1,7 +1,9 @@
-import { setUser } from "./config.js"
+import { setUser,  readConfig } from "./config.js"
 
 function main() {
-  setUser("Jusuf");
+  setUser("Lane");
+  const config = readConfig();
+  console.log(config);
 }
 
 main();
