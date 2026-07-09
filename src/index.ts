@@ -1,11 +1,14 @@
 import { setUser,  readConfig } from "./config.js"
-import { CommandsRegistry, registerCommand, runCommand } from "./commandHandler.js"
-import {handlerLogin, handlerRegister} from "./commandHandler.js"
+import { CommandsRegistry, CommandError } from "./commandHandler.js"
+import { registerCommand, runCommand } from "./commandHandler.js"
+import {handlerLogin, handlerRegister, handlerReset, handlerUsers} from "./commandHandler.js"
 
 async function main()  {
   const registry: CommandsRegistry = {};
   registerCommand(registry, "login", handlerLogin);
   registerCommand(registry, "register", handlerRegister);
+  registerCommand(registry, "reset", handlerReset);
+  registerCommand(registry, "users", handlerUsers);
 
   const validArgs = process.argv.slice(2);
 
@@ -19,10 +22,16 @@ async function main()  {
   try {
     await runCommand(registry, command, ...restCommands)
   } catch(error) {
+    if (error instanceof CommandError) {
+      console.log(error.message);
+      process.exit(error.exitCode);
+    }
     if (error instanceof Error) {
       console.log(error.message);
       process.exit(1);
     }
+    console.log("unexpected error");
+    process.exit(1);
   }
   process.exit(0)
   /*

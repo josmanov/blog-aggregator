@@ -1,6 +1,15 @@
 export type CommandHandler = (cmdName: string, ...args: string[]) => Promise<void>;
 import { setUser } from './config.js'
-import { createUser, getUser} from './lib/db/queries/users.js'
+import { createUser, getUser, deleteUsers, getUsers} from './lib/db/queries/users.js'
+import { readConfig } from "./config.js"
+
+
+export class CommandError extends Error {
+    constructor(message: string, public exitCode: 0 | 1 = 1) {
+        super(message);
+        this.name = "CommandError";
+    }
+}
 
 export type CommandsRegistry = {
     [key: string]: CommandHandler;
@@ -16,33 +25,60 @@ export async function runCommand(registry: CommandsRegistry, cmdName: string, ..
     }
 }
 
+// Why are we using cmdName in the parameter that we arent using? xDD
 export async function handlerLogin(cmdName: string, ...args: string[]) {
     if (args.length === 0) {
         throw new Error("the login handler expects a single argument, the username");
     }
     const userExists = await getUser(args[0]);
     if (!userExists) {
-        throw new Error("given username does not exist");
+        throw new CommandError("given username does not exist", 1);
     }
     setUser(args[0]);
     console.log("the user has been set");
 }
 
+// Why are we using cmdName in the parameter that we arent using? xDD
 export async function handlerRegister(cmdName: string, ...args: string[]) {
     
     if (args.length === 0) {
-        throw new Error("the register handler expects a single argument, the username");
+        throw new CommandError("the register handler expects a single argument, the username");
     }
 
     const existingUser = await getUser(args[0]);
     if (existingUser) {
-        throw new Error("user already exists");
+        throw new CommandError("user already exists", 1);
     }
 
-    const newUser = await createUser(args[0])
-
+    await createUser(args[0])
     setUser(args[0]);
     console.log("user was created");
-    //For checking results of new user created
-    console.log(newUser);
+}
+
+// Why are we using cmdName in the parameter that we arent using? xDD
+export async function handlerReset(cmdName: string, ...args: string[]) {
+    try {
+        await deleteUsers()
+        console.log("all users successfully deleted")
+    } catch(error) {
+        throw new CommandError("couldn't delete all users", 1)
+    }
+}
+
+export async function handlerUsers(cmdName: string, ...args: string[]) {
+    try {
+        const users = await getUsers()
+        const config = readConfig();
+
+        for (const user of users) {
+            if (user.name == config.currentUserName) {
+                console.log(`* ${user.name} (current)`)
+            }
+            else {
+                console.log(`* ${user.name}`)
+            }
+        }
+    } catch(error) {
+        throw new CommandError("couldn't get users", 1)
+    }
 }
