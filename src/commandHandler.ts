@@ -2,7 +2,7 @@ export type CommandHandler = (cmdName: string, ...args: string[]) => Promise<voi
 import { setUser } from './config.js'
 import { createUser, getUser, deleteUsers, getUsers} from './lib/db/queries/users.js'
 import { readConfig } from "./config.js"
-
+import { aggregator } from "./feed.js"
 
 export class CommandError extends Error {
     constructor(message: string, public exitCode: 0 | 1 = 1) {
@@ -80,5 +80,13 @@ export async function handlerUsers(cmdName: string, ...args: string[]) {
         }
     } catch(error) {
         throw new CommandError("couldn't get users", 1)
+    }
+}
+
+export async function handlerAggregator(cmdName: string, ...args: string[]) {
+    try {
+        await aggregator()
+    } catch(error) {
+        throw new CommandError("Couldn't fetch feed data", 1)
     }
 }
