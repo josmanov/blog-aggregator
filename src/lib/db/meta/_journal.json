@@ -8,6 +8,13 @@
       "when": 1783527570844,
       "tag": "0000_zippy_baron_zemo",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1783795088682,
+      "tag": "0001_green_marauders",
+      "breakpoints": true
     }
   ]
 }
