@@ -1,7 +1,7 @@
 export type CommandHandler = (cmdName: string, ...args: string[]) => Promise<void>;
 import { setUser } from './config.js'
-import { createUser, getUser, deleteUsers, getUsers,} from './lib/db/queries/users.js'
-import { createFeed } from "./lib/db/queries/feeds.js";
+import { createUser, getUser, deleteUsers, getUsers, getUserById} from './lib/db/queries/users.js'
+import { createFeed, getFeeds } from "./lib/db/queries/feeds.js";
 
 import { readConfig } from "./config.js"
 import { aggregator } from "./feed.js"
@@ -32,8 +32,7 @@ export async function runCommand(registry: CommandsRegistry, cmdName: string, ..
     }
 }
 
-// Why are we using cmdName in the parameter that we arent using? xDD
-export async function handlerLogin(cmdName: string, ...args: string[]) {
+export async function handlerLogin(_cmdName: string, ...args: string[]) {
     if (args.length === 0) {
         throw new Error("the login handler expects a single argument, the username");
     }
@@ -46,7 +45,7 @@ export async function handlerLogin(cmdName: string, ...args: string[]) {
 }
 
 // Why are we using cmdName in the parameter that we arent using? xDD
-export async function handlerRegister(cmdName: string, ...args: string[]) {
+export async function handlerRegister(_cmdName: string, ...args: string[]) {
     
     if (args.length === 0) {
         throw new CommandError("the register handler expects a single argument, the username");
@@ -62,8 +61,7 @@ export async function handlerRegister(cmdName: string, ...args: string[]) {
     console.log("user was created");
 }
 
-// Why are we using cmdName in the parameter that we arent using? xDD
-export async function handlerReset(cmdName: string, ...args: string[]) {
+export async function handlerReset(_cmdName: string, ...args: string[]) {
     try {
         await deleteUsers()
         console.log("all users successfully deleted")
@@ -72,7 +70,7 @@ export async function handlerReset(cmdName: string, ...args: string[]) {
     }
 }
 
-export async function handlerUsers(cmdName: string, ...args: string[]) {
+export async function handlerUsers(_cmdName: string, ...args: string[]) {
     try {
         const users = await getUsers()
         const config = readConfig();
@@ -90,7 +88,7 @@ export async function handlerUsers(cmdName: string, ...args: string[]) {
     }
 }
 
-export async function handlerAggregator(cmdName: string, ...args: string[]) {
+export async function handlerAggregator(_cmdName: string, ...args: string[]) {
     try {
         await aggregator()
     } catch(error) {
@@ -107,7 +105,7 @@ function printFeed(feed: Feed, user: User) {
   console.log(`User: ${user.name}`);
 }
 
-export async function handlerAddfeed(cmdName: string, ...args: string[]) {
+export async function handlerAddfeed(_cmdName: string, ...args: string[]) {
   if (args.length !== 2) {
     throw new CommandError("usage: addfeed <name> <url>", 1);
   }
@@ -119,4 +117,14 @@ export async function handlerAddfeed(cmdName: string, ...args: string[]) {
   }
   const feed = await createFeed(name, url, user.id);
   printFeed(feed, user);
+}
+
+export async function handlerGetfeeds(_cmdName: string, ...args: string[]) {
+    const allFeeds = await getFeeds();
+    for (const feed of allFeeds) {
+        const user = await getUserById(feed.userId);
+        console.log(feed.name);
+        console.log(feed.url);
+        console.log(user.name);
+    }
 }
