@@ -149,17 +149,11 @@ export async function handlerGetfeeds(_cmdName: string, ...args: string[]) {
     }
 }
 
-export async function handlerFollow(_cmdName: string, ...args: string[]) {
+export async function handlerFollow(_cmdName: string, user: User, ...args: string[]) {
     if (args.length !== 1) {
         throw new CommandError("usage: follow <url>", 1);
     }
     const url = args[0];
-    const config = readConfig();
-    const user = await getUser(config.currentUserName);
-    if (!user) {
-        throw new CommandError("couldn't find current user", 1);
-    }
-
     const feed = await getFeedByUrl(url);
     if (!feed) {
         throw new CommandError("feed not found", 1);
@@ -171,13 +165,7 @@ export async function handlerFollow(_cmdName: string, ...args: string[]) {
     console.log(feedFollow.userName);
 }
 
-export async function handlerFollowing(_cmdName: string, ...args: string[]) {
-    const config = readConfig();
-    const user = await getUser(config.currentUserName);
-    if (!user) {
-        throw new CommandError("couldn't find current user", 1);
-    }
-
+export async function handlerFollowing(_cmdName: string, user: User,  ...args: string[]) {
     const feedFollows = await getFeedFollowsForUser(user.id);
     for (const feedFollow of feedFollows) {
         console.log(feedFollow.feedName);

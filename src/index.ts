@@ -25,8 +25,8 @@ async function main()  {
   registerCommand(registry, "agg", handlerAggregator);
   registerCommand(registry, "addfeed", middlewareLoggedIn(handlerAddfeed));
   registerCommand(registry, "feeds", handlerGetfeeds);
-  registerCommand(registry, "follow", handlerFollow);
-  registerCommand(registry, "following", handlerFollowing);
+  registerCommand(registry, "follow", middlewareLoggedIn(handlerFollow));
+  registerCommand(registry, "following", middlewareLoggedIn(handlerFollowing));
 
 
 
@@ -54,12 +54,6 @@ async function main()  {
     process.exit(1);
   }
   process.exit(0)
-  /*
-
-  const config = readConfig();
-  console.log(config);
-
-  */
 }
 
 main();
