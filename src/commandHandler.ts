@@ -119,7 +119,9 @@ export async function handlerAddfeed(_cmdName: string, ...args: string[]) {
     throw new CommandError("couldn't find current user", 1);
   }
   const feed = await createFeed(name, url, user.id);
-  printFeed(feed, user);
+  const feedFollow = await createFeedFollow(user.id, feed.id);
+  console.log(feedFollow.feedName);
+  console.log(feedFollow.userName);
 }
 
 export async function handlerGetfeeds(_cmdName: string, ...args: string[]) {
