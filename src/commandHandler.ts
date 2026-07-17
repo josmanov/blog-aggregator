@@ -1,4 +1,3 @@
-export type CommandHandler = (cmdName: string, ...args: string[]) => Promise<void>;
 import { setUser } from './config.js'
 import { createUser, getUser, deleteUsers, getUsers, getUserById} from './lib/db/queries/users.js'
 import { createFeed, getFeeds } from "./lib/db/queries/feeds.js";
@@ -10,6 +9,27 @@ import { readConfig } from "./config.js"
 import { aggregator } from "./feed.js"
 
 import { feeds, users } from "./lib/db/schema.js"; // adjust path
+
+export type CommandHandler = (cmdName: string, ...args: string[]) => Promise<void>;
+
+export type userCommandHandler = (
+    cmdName: string,
+    user: User,
+    ...args: string[]
+) => Promise<void>;
+
+export type middlewareLoggedin = (handler: userCommandHandler) => CommandHandler; 
+
+export function middlewareLoggedIn(handler: userCommandHandler): CommandHandler {
+    return async (cmdName: string, ...args: string[]) => {
+        const config = readConfig();
+        const user = await getUser(config.currentUserName);
+        if (!user) {
+            throw new CommandError(`User ${config.currentUserName} not found`, 1);
+        }
+        await handler(cmdName, user, ...args);
+    };
+}
 
 export type Feed = typeof feeds.$inferSelect;
 export type User = typeof users.$inferSelect;
