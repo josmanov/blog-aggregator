@@ -25,3 +25,22 @@ export async function createFeedFollow(userId: string, feedId: string) {
 
     return result;
 }
+
+export async function getFeedFollowsForUser(userId: string) {
+    const result = await db
+        .select({
+            id: feed_follows.id,
+            createdAt: feed_follows.createdAt,
+            updatedAt: feed_follows.updatedAt,
+            userId: feed_follows.userId,
+            feedId: feed_follows.feedId,
+            feedName: feeds.name,
+            userName: users.name,
+        })
+        .from(feed_follows)
+        .innerJoin(feeds, eq(feed_follows.feedId, feeds.id))
+        .innerJoin(users, eq(feed_follows.userId, users.id))
+        .where(eq(feed_follows.userId, userId));
+
+    return result;
+}

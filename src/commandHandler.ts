@@ -2,6 +2,9 @@ export type CommandHandler = (cmdName: string, ...args: string[]) => Promise<voi
 import { setUser } from './config.js'
 import { createUser, getUser, deleteUsers, getUsers, getUserById} from './lib/db/queries/users.js'
 import { createFeed, getFeeds } from "./lib/db/queries/feeds.js";
+import { getFeedByUrl } from "./lib/db/queries/feeds.js"
+import { createFeedFollow } from "./lib/db/queries/feed_follows.js"
+import { getFeedFollowsForUser } from "./lib/db/queries/feed_follows.js"
 
 import { readConfig } from "./config.js"
 import { aggregator } from "./feed.js"
@@ -126,5 +129,40 @@ export async function handlerGetfeeds(_cmdName: string, ...args: string[]) {
         console.log(feed.name);
         console.log(feed.url);
         console.log(user.name);
+    }
+}
+
+export async function handlerFollow(_cmdName: string, ...args: string[]) {
+    if (args.length !== 1) {
+        throw new CommandError("usage: follow <url>", 1);
+    }
+    const url = args[0];
+    const config = readConfig();
+    const user = await getUser(config.currentUserName);
+    if (!user) {
+        throw new CommandError("couldn't find current user", 1);
+    }
+
+    const feed = await getFeedByUrl(url);
+    if (!feed) {
+        throw new CommandError("feed not found", 1);
+    }
+    
+    const feedFollow = await createFeedFollow(user.id, feed.id);
+
+    console.log(feedFollow.feedName);
+    console.log(feedFollow.userName);
+}
+
+export async function handlerFollowing(_cmdName: string, ...args: string[]) {
+    const config = readConfig();
+    const user = await getUser(config.currentUserName);
+    if (!user) {
+        throw new CommandError("couldn't find current user", 1);
+    }
+
+    const feedFollows = await getFeedFollowsForUser(user.id);
+    for (const feedFollow of feedFollows) {
+        console.log(feedFollow.feedName);
     }
 }
