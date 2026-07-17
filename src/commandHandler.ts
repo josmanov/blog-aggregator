@@ -128,16 +128,11 @@ function printFeed(feed: Feed, user: User) {
   console.log(`User: ${user.name}`);
 }
 
-export async function handlerAddfeed(_cmdName: string, ...args: string[]) {
+export async function handlerAddfeed(_cmdName: string, user: User, ...args: string[]) {
   if (args.length !== 2) {
     throw new CommandError("usage: addfeed <name> <url>", 1);
   }
   const [name, url] = args;
-  const config = readConfig();
-  const user = await getUser(config.currentUserName);
-  if (!user) {
-    throw new CommandError("couldn't find current user", 1);
-  }
   const feed = await createFeed(name, url, user.id);
   const feedFollow = await createFeedFollow(user.id, feed.id);
   console.log(feedFollow.feedName);

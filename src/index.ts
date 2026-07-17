@@ -1,7 +1,20 @@
 import { setUser,  readConfig } from "./config.js"
 import { CommandsRegistry, CommandError } from "./commandHandler.js"
 import { registerCommand, runCommand } from "./commandHandler.js"
-import {handlerLogin, handlerRegister, handlerReset, handlerUsers, handlerAggregator, handlerAddfeed, handlerGetfeeds, handlerFollow, handlerFollowing} from "./commandHandler.js"
+import { middlewareLoggedIn } from "./commandHandler.js"
+import {
+  handlerLogin, 
+  handlerRegister, 
+  handlerReset, 
+  handlerUsers, 
+  handlerAggregator, 
+  handlerAddfeed, 
+  handlerGetfeeds, 
+  handlerFollow, 
+  handlerFollowing
+} from "./commandHandler.js"
+
+
 
 async function main()  {
   const registry: CommandsRegistry = {};
@@ -10,7 +23,7 @@ async function main()  {
   registerCommand(registry, "reset", handlerReset);
   registerCommand(registry, "users", handlerUsers);
   registerCommand(registry, "agg", handlerAggregator);
-  registerCommand(registry, "addfeed", handlerAddfeed);
+  registerCommand(registry, "addfeed", middlewareLoggedIn(handlerAddfeed));
   registerCommand(registry, "feeds", handlerGetfeeds);
   registerCommand(registry, "follow", handlerFollow);
   registerCommand(registry, "following", handlerFollowing);
