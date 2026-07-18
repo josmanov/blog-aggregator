@@ -1,4 +1,3 @@
-import { setUser,  readConfig } from "./config.js"
 import { CommandsRegistry, CommandError } from "./commandHandler.js"
 import { registerCommand, runCommand } from "./commandHandler.js"
 import { middlewareLoggedIn } from "./commandHandler.js"

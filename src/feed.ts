@@ -1,5 +1,4 @@
 import { XMLParser } from "fast-xml-parser";
-import { CommandError} from "./commandHandler.js"
 import { getNextFeedToFetch, markFeedFetched} from "./lib/db/queries/feeds.js"
 import { createPost } from "./lib/db/queries/posts.js"
 
@@ -95,21 +94,9 @@ export async function scrapeFeeds() {
                 feedId: feed.id,
             });
         } catch (error) {
-            if (error instanceof Error && error.message.includes("unique")) {
-                return;
-            }
-            console.log(`couldn't create post: ${item.title}`);
+            // duplicate url or other insert failure — basically skip this item
+            continue;
         }
-    }
-}
-
-export async function aggregator() {
-    try {
-        const feed = await fetchFeed("https://www.wagslane.dev/index.xml");
-        console.log("fetching completed");
-        console.log(feed);
-    } catch (error) {
-        throw new CommandError("couldn't fetch data", 1);
     }
 }
 

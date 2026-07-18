@@ -9,9 +9,8 @@ import { parseDuration, scrapeFeeds } from "./feed.js";
 import { getPostsForUser } from "./lib/db/queries/posts.js"
 
 import { readConfig } from "./config.js"
-import { aggregator } from "./feed.js"
 
-import { feeds, users } from "./lib/db/schema.js"; // adjust path
+import { feeds, users } from "./lib/db/schema.js";
 
 export type CommandHandler = (cmdName: string, ...args: string[]) => Promise<void>;
 
@@ -53,14 +52,15 @@ export function registerCommand(registry: CommandsRegistry, cmdName: string, han
 }
 
 export async function runCommand(registry: CommandsRegistry, cmdName: string, ...args: string[]) {
-    if (registry[cmdName]) {
-        await registry[cmdName](cmdName, ...args);
+    if (!registry[cmdName]) {
+        throw new CommandError(`unknown command: ${cmdName}`, 1);
     }
+    await registry[cmdName](cmdName, ...args);
 }
 
-export async function handlerLogin(_cmdName: string, ...args: string[]) {
+export async function handlerLogin(cmdName: string, ...args: string[]) {
     if (args.length === 0) {
-        throw new Error("the login handler expects a single argument, the username");
+        throw new CommandError(`usage: ${cmdName} <username>`, 1);
     }
     const userExists = await getUser(args[0]);
     if (!userExists) {
@@ -70,11 +70,9 @@ export async function handlerLogin(_cmdName: string, ...args: string[]) {
     console.log("the user has been set");
 }
 
-// Why are we using cmdName in the parameter that we arent using? xDD
-export async function handlerRegister(_cmdName: string, ...args: string[]) {
-    
+export async function handlerRegister(cmdName: string, ...args: string[]) {
     if (args.length === 0) {
-        throw new CommandError("the register handler expects a single argument, the username");
+        throw new CommandError(`usage: ${cmdName} <username>`, 1);
     }
 
     const existingUser = await getUser(args[0]);
@@ -114,9 +112,9 @@ export async function handlerUsers(_cmdName: string, ...args: string[]) {
     }
 }
 
-export async function handlerAggregator(_cmdName: string, ...args: string[]) {
+export async function handlerAggregator(cmdName: string, ...args: string[]) {
     if (args.length !== 1) {
-        throw new CommandError("usage: agg <time_between_reqs>", 1);
+        throw new CommandError(`usage: ${cmdName} <time_between_reqs>`, 1);
     }
     const timeBetweenRequests = parseDuration(args[0]);
     console.log(`Collecting feeds every ${args[0]}`);
@@ -140,9 +138,9 @@ export async function handlerAggregator(_cmdName: string, ...args: string[]) {
     });
 }
 
-export async function handlerAddfeed(_cmdName: string, user: User, ...args: string[]) {
+export async function handlerAddfeed(cmdName: string, user: User, ...args: string[]) {
   if (args.length !== 2) {
-    throw new CommandError("usage: addfeed <name> <url>", 1);
+    throw new CommandError(`usage: ${cmdName} <name> <url>`, 1);
   }
   const [name, url] = args;
   const feed = await createFeed(name, url, user.id);
@@ -151,19 +149,19 @@ export async function handlerAddfeed(_cmdName: string, user: User, ...args: stri
   console.log(feedFollow.userName);
 }
 
-export async function handlerGetfeeds(_cmdName: string, ...args: string[]) {
+export async function handlerGetfeeds(_cmdName: string, ..._args: string[]) {
     const allFeeds = await getFeeds();
     for (const feed of allFeeds) {
         const user = await getUserById(feed.userId);
         console.log(feed.name);
         console.log(feed.url);
-        console.log(user.name);
+        console.log(user?.name);
     }
 }
 
-export async function handlerFollow(_cmdName: string, user: User, ...args: string[]) {
+export async function handlerFollow(cmdName: string, user: User, ...args: string[]) {
     if (args.length !== 1) {
-        throw new CommandError("usage: follow <url>", 1);
+        throw new CommandError(`usage: ${cmdName} <url>`, 1);
     }
     const url = args[0];
     const feed = await getFeedByUrl(url);
@@ -177,33 +175,33 @@ export async function handlerFollow(_cmdName: string, user: User, ...args: strin
     console.log(feedFollow.userName);
 }
 
-export async function handlerFollowing(_cmdName: string, user: User,  ...args: string[]) {
+export async function handlerFollowing(_cmdName: string, user: User, ..._args: string[]) {
     const feedFollows = await getFeedFollowsForUser(user.id);
     for (const feedFollow of feedFollows) {
         console.log(feedFollow.feedName);
     }
 }
 
-export async function handlerUnfollow(_cmdName: string, user: User, ...args: string[]) {
+export async function handlerUnfollow(cmdName: string, user: User, ...args: string[]) {
     if (args.length !== 1) {
-        throw new CommandError("usage: unfollow <url>", 1);
+        throw new CommandError(`usage: ${cmdName} <url>`, 1);
     }
-    
+
     const url = args[0];
-    const feed = await getFeedByUrl(url)
+    const feed = await getFeedByUrl(url);
     if (!feed) {
         throw new CommandError("feed not found", 1);
     }
 
-    await deleteFeedFollow(user.id, url)
+    await deleteFeedFollow(user.id, url);
 }
 
-export async function handlerBrowse(_cmdName: string, user: User, ...args: string[]) {
+export async function handlerBrowse(cmdName: string, user: User, ...args: string[]) {
     let limit = 2;
     if (args.length === 1) {
         limit = parseInt(args[0], 10);
         if (isNaN(limit)) {
-            throw new CommandError("usage: brose [limit]", 1);
+            throw new CommandError(`usage: ${cmdName} [limit]`, 1);
         }
     }
 
