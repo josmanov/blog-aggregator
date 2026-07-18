@@ -5,6 +5,7 @@ import { getFeedByUrl } from "./lib/db/queries/feeds.js"
 import { createFeedFollow } from "./lib/db/queries/feed_follows.js"
 import { getFeedFollowsForUser } from "./lib/db/queries/feed_follows.js"
 import { deleteFeedFollow } from "./lib/db/queries/feed_follows.js"
+import { parseDuration, scrapeFeeds } from "./feed.js";
 
 import { readConfig } from "./config.js"
 import { aggregator } from "./feed.js"
@@ -113,20 +114,29 @@ export async function handlerUsers(_cmdName: string, ...args: string[]) {
 }
 
 export async function handlerAggregator(_cmdName: string, ...args: string[]) {
-    try {
-        await aggregator()
-    } catch(error) {
-        throw new CommandError("Couldn't fetch feed data", 1)
+    if (args.length !== 1) {
+        throw new CommandError("usage: agg <time_between_reqs>", 1);
     }
-}
+    const timeBetweenRequests = parseDuration(args[0]);
+    console.log(`Collecting feeds every ${args[0]}`);
 
-function printFeed(feed: Feed, user: User) {
-  console.log(`ID: ${feed.id}`);
-  console.log(`Created: ${feed.createdAt}`);
-  console.log(`Updated: ${feed.updatedAt}`);
-  console.log(`Name: ${feed.name}`);
-  console.log(`URL: ${feed.url}`);
-  console.log(`User: ${user.name}`);
+    const handleError = (error: unknown) => {
+        console.error(error);
+    };
+
+    scrapeFeeds().catch(handleError);
+
+    const interval = setInterval(() => {
+        scrapeFeeds().catch(handleError);
+    },  timeBetweenRequests);
+
+    await new Promise<void>((resolve) => {
+        process.on("SIGINT", () => {
+            console.log("Shutting down feed aggregator...");
+            clearInterval(interval);
+            resolve();
+        });
+    });
 }
 
 export async function handlerAddfeed(_cmdName: string, user: User, ...args: string[]) {

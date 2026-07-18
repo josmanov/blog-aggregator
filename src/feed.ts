@@ -1,5 +1,6 @@
 import { XMLParser } from "fast-xml-parser";
 import { CommandError} from "./commandHandler.js"
+import { getNextFeedToFetch, markFeedFetched} from "./lib/db/queries/feeds.js"
 
 type FeedItem = {
     title: string;
@@ -23,7 +24,7 @@ const isValidItem = (item: unknown): item is FeedItem => {
     );
 }
 
-const fetchFeed = async (feedURL: string) => {
+export const fetchFeed = async (feedURL: string) => {
 
     const response = await fetch(feedURL, {
         headers: {
@@ -67,6 +68,22 @@ const fetchFeed = async (feedURL: string) => {
     return channelObject;
 }
 
+export async function scrapeFeeds() {
+    const feed = await getNextFeedToFetch();
+    if (!feed) {
+        console.log("No feeds to fetch");
+        return;
+    }
+    console.log(`fetching ${feed.name} (${feed.url})`);
+
+    const feedData = await fetchFeed(feed.url);
+    await markFeedFetched(feed.id);
+
+    for (const item of feedData.items) {
+        console.log(item.title);
+    }
+}
+
 export async function aggregator() {
     try {
         const feed = await fetchFeed("https://www.wagslane.dev/index.xml");
@@ -74,5 +91,23 @@ export async function aggregator() {
         console.log(feed);
     } catch (error) {
         throw new CommandError("couldn't fetch data", 1);
+    }
+}
+
+export function parseDuration(durationStr: string): number {
+    const regex = /^(\d+)(ms|s|m|h)$/;
+    const match = durationStr.match(regex);
+    if (!match) {
+        throw new Error(`Invalid duration: ${durationStr}`);
+    }
+    const value = parseInt(match[1], 10);
+    const unit = match[2];
+
+    switch (unit) {
+        case "ms": return value;
+        case "s": return value * 1000;
+        case "m": return value * 60 * 1000;
+        case "h": return value * 60 * 60 * 1000;
+        default: throw new Error(`Unknown unit: ${unit}`);
     }
 }

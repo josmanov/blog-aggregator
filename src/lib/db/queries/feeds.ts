@@ -40,11 +40,11 @@ export async function markFeedFetched(feedId: string) {
     .where(eq(feeds.id, feedId));
 }
 
-export async function getNextFeedToFetch(feedId: string) {
+export async function getNextFeedToFetch() {
   const [feed] = await db
     .select()
     .from(feeds)
-    .orderBy(sql`${feeds.lastFetchedAt} ASC NULL FIRST`)
+    .orderBy(sql`${feeds.lastFetchedAt} ASC NULLS FIRST`)
     .limit(1);
 
   return feed;
