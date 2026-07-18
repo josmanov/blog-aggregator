@@ -6,6 +6,7 @@ import { createFeedFollow } from "./lib/db/queries/feed_follows.js"
 import { getFeedFollowsForUser } from "./lib/db/queries/feed_follows.js"
 import { deleteFeedFollow } from "./lib/db/queries/feed_follows.js"
 import { parseDuration, scrapeFeeds } from "./feed.js";
+import { getPostsForUser } from "./lib/db/queries/posts.js"
 
 import { readConfig } from "./config.js"
 import { aggregator } from "./feed.js"
@@ -195,4 +196,23 @@ export async function handlerUnfollow(_cmdName: string, user: User, ...args: str
     }
 
     await deleteFeedFollow(user.id, url)
+}
+
+export async function handlerBrowse(_cmdName: string, user: User, ...args: string[]) {
+    let limit = 2;
+    if (args.length === 1) {
+        limit = parseInt(args[0], 10);
+        if (isNaN(limit)) {
+            throw new CommandError("usage: brose [limit]", 1);
+        }
+    }
+
+    const postsForUser = await getPostsForUser(user.id, limit);
+    for (const post of postsForUser) {
+        console.log(post.title);
+        console.log(post.url);
+        console.log(post.description);
+        console.log(post.publishedAt);
+        console.log("---");
+    }
 }

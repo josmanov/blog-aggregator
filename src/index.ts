@@ -13,6 +13,7 @@ import {
   handlerFollow, 
   handlerFollowing,
   handlerUnfollow,
+  handlerBrowse,
 } from "./commandHandler.js"
 
 
@@ -29,8 +30,7 @@ async function main()  {
   registerCommand(registry, "follow", middlewareLoggedIn(handlerFollow));
   registerCommand(registry, "following", middlewareLoggedIn(handlerFollowing));
   registerCommand(registry, "unfollow", middlewareLoggedIn(handlerUnfollow));
-
-
+  registerCommand(registry, "browse", middlewareLoggedIn(handlerBrowse));
 
   const validArgs = process.argv.slice(2);
 

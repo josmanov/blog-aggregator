@@ -1,6 +1,7 @@
 import { XMLParser } from "fast-xml-parser";
 import { CommandError} from "./commandHandler.js"
 import { getNextFeedToFetch, markFeedFetched} from "./lib/db/queries/feeds.js"
+import { createPost } from "./lib/db/queries/posts.js"
 
 type FeedItem = {
     title: string;
@@ -68,6 +69,11 @@ export const fetchFeed = async (feedURL: string) => {
     return channelObject;
 }
 
+function parsePublishedAt(pubDate: string): Date | null {
+  const date = new Date(pubDate);
+  return isNaN(date.getTime()) ? null : date;
+}
+
 export async function scrapeFeeds() {
     const feed = await getNextFeedToFetch();
     if (!feed) {
@@ -80,7 +86,20 @@ export async function scrapeFeeds() {
     await markFeedFetched(feed.id);
 
     for (const item of feedData.items) {
-        console.log(item.title);
+        try {
+            await createPost({
+                title: item.title,
+                url: item.link,
+                description: item.description,
+                publishedAt: parsePublishedAt(item.pubDate),
+                feedId: feed.id,
+            });
+        } catch (error) {
+            if (error instanceof Error && error.message.includes("unique")) {
+                return;
+            }
+            console.log(`couldn't create post: ${item.title}`);
+        }
     }
 }
 
