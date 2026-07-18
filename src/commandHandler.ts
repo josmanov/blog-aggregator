@@ -4,6 +4,7 @@ import { createFeed, getFeeds } from "./lib/db/queries/feeds.js";
 import { getFeedByUrl } from "./lib/db/queries/feeds.js"
 import { createFeedFollow } from "./lib/db/queries/feed_follows.js"
 import { getFeedFollowsForUser } from "./lib/db/queries/feed_follows.js"
+import { deleteFeedFollow } from "./lib/db/queries/feed_follows.js"
 
 import { readConfig } from "./config.js"
 import { aggregator } from "./feed.js"
@@ -170,4 +171,18 @@ export async function handlerFollowing(_cmdName: string, user: User,  ...args: s
     for (const feedFollow of feedFollows) {
         console.log(feedFollow.feedName);
     }
+}
+
+export async function handlerUnfollow(_cmdName: string, user: User, ...args: string[]) {
+    if (args.length !== 1) {
+        throw new CommandError("usage: unfollow <url>", 1);
+    }
+    
+    const url = args[0];
+    const feed = await getFeedByUrl(url)
+    if (!feed) {
+        throw new CommandError("feed not found", 1);
+    }
+
+    await deleteFeedFollow(user.id, url)
 }

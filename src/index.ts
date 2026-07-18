@@ -11,7 +11,8 @@ import {
   handlerAddfeed, 
   handlerGetfeeds, 
   handlerFollow, 
-  handlerFollowing
+  handlerFollowing,
+  handlerUnfollow,
 } from "./commandHandler.js"
 
 
@@ -27,6 +28,7 @@ async function main()  {
   registerCommand(registry, "feeds", handlerGetfeeds);
   registerCommand(registry, "follow", middlewareLoggedIn(handlerFollow));
   registerCommand(registry, "following", middlewareLoggedIn(handlerFollowing));
+  registerCommand(registry, "unfollow", middlewareLoggedIn(handlerUnfollow));
 
 
 
